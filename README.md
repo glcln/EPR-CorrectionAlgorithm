@@ -1,6 +1,6 @@
 # Environment and Installation
 
-1. Make sure to use the right CMS_SW version: `CMSSW_10_6_30`
+1. Make sure to use the right CMSSW version: `CMSSW_10_6_30`
 
 2. Clone the git project.
 
@@ -35,7 +35,10 @@ The correction is implemented in `Correction_2strips`. If the corrected maximum 
 
 # Create Templates for the single saturated strip clusters
 
-The algorithm uses correction coefficients. To do so, templates are computed for each strip layer of the tracker (TIB, TOB, TID rings and TEC rings) on MC simulations of two generated muons back-to-back (with a $p_T$ from 50 to 200 GeV and $\eta$ from -3 to 3), with PU under Run2 UL conditions. The cluster collection of interest is an intermediate collection stored up to the AOD level which provides information on the simulated deposited charge on the strips associated to the muons, with no electronic saturation applied yet, without noise, without PU contamination, without zero suppression. Then, coefficients are computed by knowing the actual value of the saturated strips and its contribution on the adjacent strips. These MC samples are stored in the folder `ROOT_Files/`.
+The algorithm uses correction coefficients. To do so, templates are computed for each strip layer of the tracker (TIB, TOB, TID rings and TEC rings) on MC simulations of two generated muons back-to-back (with a $p_T$ from 50 to 200 GeV and $\eta$ from -3 to 3), with PU under Run2 UL conditions. The cluster collection of interest is an intermediate collection stored up to the AOD level which provides information on the simulated deposited charge on the strips associated to the muons, with no electronic saturation applied yet, without noise, without PU contamination, without zero suppression. Then, coefficients are computed by knowing the actual value of the saturated strips and its contribution on the adjacent strips.
+
+
+These MC samples are local simulations stored at Strasbourg (files too large to be uploaded here). Be sure to be connected to Strasbourg somehow to be able to generate these templates or test the correction with the code detailed in the section below. This is why there are default templates already uploaded in the folder `Template_correction/`.
 
 
 Use the script `Script_CreateTemplate.sh` to create the templates. It will run the code `CreateTemplate.C` on samples of two muons back-to-back and store those templates as `.txt` files in the folder `Template_correction/`. It also creates `Check_Template.root` if you want to view these correction coefficients on each tracker layer and for each shape.
