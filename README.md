@@ -21,6 +21,10 @@ Clusters are first classified in 5 differents families (role of `ClusterShape`):
 - If adjacent strips ratio differs by at least 10 % $\longrightarrow$ *Left* or *Right* (depends on the ratio), these are asymetric clusters with a charge barycenter not centered on the maximum.
 - If the maximum is at the edge of the cluster $\longrightarrow$ *FullLeft* or *FullRight*, these are the most asymetric clusters.
 
+<div align="center">
+  <img src="SchemeShape.png" alt="Here is a scheme to view the 5 possible cluster shapes" width="800"/>
+</div>
+
 
 
 After classification, according to the shape a correction is performed using coefficient templates (see below). This is the role of `ReturnCorr` wich calls `Correction_LRC` and `Correction_FL_FR`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
