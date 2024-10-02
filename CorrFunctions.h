@@ -118,11 +118,22 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
 
     if (cpt_sat == 1)
     {
+        int MaxCorr = -1;
         // FULL LEFT
-        if (*max_Q==Q[0] && *(max_Q+1)>=ThresholdSat && *(max_Q+1)<254) return template_FL[layer-1] * (*(max_Q+1));
+        if (*max_Q==Q[0] && *(max_Q+1)>=ThresholdSat && *(max_Q+1)<254)
+        {
+            MaxCorr = template_FL[layer-1] * (*(max_Q+1));
+            if (MaxCorr>254) return MaxCorr;
+            else return *(max_Q);
+        }
 
         // FULL RIGHT
-        if (*max_Q==Q[Q.size()-1] && *(max_Q-1)>=ThresholdSat && *(max_Q-1)<254) return template_FR[layer-1] * (*(max_Q-1));
+        if (*max_Q==Q[Q.size()-1] && *(max_Q-1)>=ThresholdSat && *(max_Q-1)<254)
+        {
+            MaxCorr = template_FR[layer-1] * (*(max_Q-1));
+            if (MaxCorr>254) return MaxCorr;
+            else return *(max_Q);
+        }
 
         return *(max_Q);
     }
@@ -178,7 +189,9 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
         }
         Template.close();
 
-        return 1.*(Vmax+Vmin)/2 * template_a1[layer-1];
+        int MaxCorr = 1.*(Vmax+Vmin)/2 * template_a1[layer-1];
+        if (MaxCorr>254) return MaxCorr;
+        else return *(max_Q);
     }
 
     while (std::getline(Template, line))
@@ -193,38 +206,42 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     }
     Template.close();
 
-    return Vmax * template_a1[layer-1] + Vmin * template_a2[layer-1];
+    int MaxCorr = Vmax * template_a1[layer-1] + Vmin * template_a2[layer-1];
+    if (MaxCorr>254) return MaxCorr;
+    else return *(max_Q);
 }
 
 int Correction_2strips(const std::vector <int>&  Q)
 {
-  int Qcorr = accumulate(Q.begin(), Q.end(), 0);
-  int index_maxLeft = -1;
+    int Qcorr = -1;
+    int SumQ = accumulate(Q.begin(), Q.end(), 0);
+    int index_maxLeft = -1;
 
-      // NUMBER OF MAX + IF CONSECUTIVE OR NOT
-  int cpt_sat = 0;
-  bool two_cons_sat = false;
+        // NUMBER OF MAX + IF CONSECUTIVE OR NOT
+    int cpt_sat = 0;
+    bool two_cons_sat = false;
 
-  if (Q[0]>=254) cpt_sat++;
-  for (int i=1; i<Q.size(); i++)
-  {
-    if (Q[i]>=254) cpt_sat++;
-
-    if (Q[i-1]>=254 && Q[i]>=254)
+    if (Q[0]>=254) cpt_sat++;
+    for (int i=1; i<Q.size(); i++)
     {
-      if (two_cons_sat) continue;
-      two_cons_sat = true;
-      index_maxLeft = i-1; 
-    }
-  }
-  
-      // NO CORRECTION
-  if (cpt_sat!=2 || !two_cons_sat || Q.size() < 4) return Qcorr;
-  
-      // CORRECTION
-  Qcorr = 1./0.0613 * (Q[index_maxLeft-1] + Q[index_maxLeft+2])/2;
+        if (Q[i]>=254) cpt_sat++;
 
-  return Qcorr;
+        if (Q[i-1]>=254 && Q[i]>=254)
+        {
+            if (two_cons_sat) continue;
+            two_cons_sat = true;
+            index_maxLeft = i-1; 
+        }
+    }
+    
+        // NO CORRECTION
+    if (cpt_sat!=2 || !two_cons_sat || Q.size() < 4) return SumQ;
+    
+        // CORRECTION
+    Qcorr = 1./0.0613 * (Q[index_maxLeft-1] + Q[index_maxLeft+2])/2;
+
+    if (Qcorr > SumQ) return Qcorr;
+    else return SumQ;
 }
 
 void ClusterShape(const std::vector <int>&  Q, bool &left, bool &right, bool &center, bool &FullLeft, bool &FullRight)
