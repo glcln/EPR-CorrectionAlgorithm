@@ -29,7 +29,7 @@ After classification, according to the shape a correction is performed using coe
 ## Cluster with two consecutive saturated strips
 
 
-The correction is a cross-talk inversion of the two saturated strips based on the adjacent strips of these two peaks, the coefficient was established (and hard-coded here) using Monte-Carlo simulations of two muons back-to-back (simulations detailed below). These two adjacent strips represent $1/0.0613 = 16.3 \%$ of the total charge of the cluster.
+The correction is a cross-talk inversion of the two saturated strips based on the adjacent strips of these two peaks, the coefficient was established (and hard-coded here) using Monte-Carlo simulations of two muons back-to-back (simulations detailed below). These two adjacent strips represent 1/0.0613 = 16.3 \% of the total charge of the cluster.
 
 
 The correction is implemented in `Correction_2strips`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
