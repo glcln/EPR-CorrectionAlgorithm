@@ -15,10 +15,12 @@ The functions are implemented in `CorrFunctions.h`.
 The correction is based on charge reconstruction of the saturated strip using only neighbourhood knowledge. This algorithm only concerns one single saturated strip clusters with a size greater than 2.
 
 
+
 Clusters are first classified in 5 differents families (role of `ClusterShape`): 
 - If adjacent strips of the maximum are similar in size $\longrightarrow$ *Center*, these are the most common clusters (~80% in muon data).
 - If adjacent strips ratio differs by at least 10 % $\longrightarrow$ *Left* or *Right* (depends on the ratio), these are asymetric clusters with a charge barycenter not centered on the maximum.
 - If the maximum is at the edge of the cluster $\longrightarrow$ *FullLeft* or *FullRight*, these are the most asymetric clusters.
+
 
 
 After classification, according to the shape a correction is performed using coefficient templates (see below). This is the role of `ReturnCorr` wich calls `Correction_LRC` and `Correction_FL_FR`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
@@ -27,7 +29,7 @@ After classification, according to the shape a correction is performed using coe
 ## Cluster with two consecutive saturated strips
 
 
-The correction is a cross-talk inversion of the two saturated strips based on the adjacent strips of these two peaks, the coefficient was established (and hard-coded here) using Monte-Carlo simulations of two muons back-to-back (simulations detailed below). These two adjacent strips represent $1./0.0613 = 16.3 %$ of the total charge of the cluster.
+The correction is a cross-talk inversion of the two saturated strips based on the adjacent strips of these two peaks, the coefficient was established (and hard-coded here) using Monte-Carlo simulations of two muons back-to-back (simulations detailed below). These two adjacent strips represent $1/0.0613 = 16.3 \%$ of the total charge of the cluster.
 
 
 The correction is implemented in `Correction_2strips`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
