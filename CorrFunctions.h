@@ -114,7 +114,11 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
 
     // NO CORRECTION IF TOO SMALL OR LARGE
-    if (Q.size()<2 || Q.size()>8) return *(max_Q);
+    if (Q.size()<2 || Q.size()>8)
+    {
+        if (*(max_Q)==255) return 1023;
+        return 254;
+    }
 
     if (cpt_sat == 1)
     {
@@ -123,23 +127,30 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
         if (*max_Q==Q[0] && *(max_Q+1)>=ThresholdSat && *(max_Q+1)<254)
         {
             MaxCorr = template_FL[layer-1] * (*(max_Q+1));
-            if (MaxCorr>254) return MaxCorr;
-            else return *(max_Q);
+            if (*(max_Q)==255 && MaxCorr<1023) return 1023;
+            if (MaxCorr<254) return 254;
+            else return MaxCorr;
         }
 
         // FULL RIGHT
         if (*max_Q==Q[Q.size()-1] && *(max_Q-1)>=ThresholdSat && *(max_Q-1)<254)
         {
             MaxCorr = template_FR[layer-1] * (*(max_Q-1));
-            if (MaxCorr>254) return MaxCorr;
-            else return *(max_Q);
+            if (*(max_Q)==255 && MaxCorr<1023) return 1023;
+            if (MaxCorr<254) return 254;
+            else return MaxCorr;
         }
 
-        return *(max_Q);
+        if (*(max_Q)==255) return 1023;
+        return 254;
     }
 
     // NO ONE SINGLE SATURATED STRIP --> no x-talk inversion
-    else return *(max_Q);
+    else
+    {
+        if (*(max_Q)==255) return 1023;
+        return 254;
+    }
 }
 
 int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateFile, bool CENTER)
@@ -168,7 +179,11 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     }
 
     // NO CORRECTION IF TOO SMALL OR LARGE
-    if (Q.size()<2 || Q.size()>8) return *(max_Q);
+    if (Q.size()<2 || Q.size()>8)
+    {
+        if (*(max_Q)==255) return 1023;
+        return 254;
+    }
 
     // CORRECTION TEMPLATES
     std::ifstream Template(TemplateFile);
@@ -190,8 +205,9 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
         Template.close();
 
         int MaxCorr = 1.*(Vmax+Vmin)/2 * template_a1[layer-1];
-        if (MaxCorr>254) return MaxCorr;
-        else return *(max_Q);
+        if (*(max_Q)==255 && MaxCorr<1023) return 1023;
+        if (MaxCorr<254) return 254;
+        else return MaxCorr;
     }
 
     while (std::getline(Template, line))
@@ -207,8 +223,9 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     Template.close();
 
     int MaxCorr = Vmax * template_a1[layer-1] + Vmin * template_a2[layer-1];
-    if (MaxCorr>254) return MaxCorr;
-    else return *(max_Q);
+    if (*(max_Q)==255 && MaxCorr<1023) return 1023;
+    if (MaxCorr<254) return 254;
+    else return MaxCorr;
 }
 
 int Correction_2strips(const std::vector <int>&  Q)
