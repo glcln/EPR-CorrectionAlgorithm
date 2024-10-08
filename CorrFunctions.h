@@ -108,7 +108,7 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     // NUMBER OF MAX
     for (unsigned int i=0;i<Q.size();i++)
     {
-        if (Q[i]>=240 && Q[i]<=250) cpt_sat++;
+        if (Q[i]>=254) cpt_sat++;
     }
 
     vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
@@ -150,7 +150,7 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
 
     for (unsigned int i=0;i<Q.size();i++)
     {
-        if (Q[i]>=240 && Q[i]<=250) cpt_sat++;
+        if (Q[i]>=254) cpt_sat++;
     }
 
 	vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
