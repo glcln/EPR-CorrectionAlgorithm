@@ -251,8 +251,9 @@ int Correction_2strips(const std::vector <int>&  Q)
         }
     }
     
-        // NO CORRECTION
-    if (cpt_sat!=2 || !two_cons_sat || Q.size() < 4) return SumQ;
+        // NO CORRECTION if not 2 consecutive saturated strips, or if clusters too small or if max is at the edge
+    if (cpt_sat!=2 || !two_cons_sat || Q.size() < 4
+        || index_maxLeft==0 || index_maxLeft==Q.size()-2) return SumQ;
     
         // CORRECTION
     Qcorr = 1./0.0613 * (Q[index_maxLeft-1] + Q[index_maxLeft+2])/2;
