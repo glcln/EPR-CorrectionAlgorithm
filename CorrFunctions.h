@@ -81,7 +81,7 @@ double getMaxHisto_X(TH1D* h)
 int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string TemplateFile)
 {
     int MaxCorr = 0;
-    int cpt_sat = 0;
+    int N_sat = 0;
     int ThresholdSat = -1;
 
     if ((layer>=5 && layer<=10) || layer>=18) ThresholdSat = 25;
@@ -106,49 +106,52 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     Template.close();
 
     // NUMBER OF MAX
-    for (unsigned int i=0;i<Q.size();i++)
+    for (unsigned int i=0; i<Q.size(); i++)
     {
-        if (Q[i]>=254) cpt_sat++;
+        if (Q[i] >= 254) N_sat++;
     }
 
-    vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
+    int max_Q = *max_element(Q.begin(), Q.end());
+    int i_max = find(Q.begin(), Q.end(), max_Q) - Q.begin();
 
     // NO CORRECTION IF TOO SMALL OR LARGE
     if (Q.size()<2 || Q.size()>8)
     {
-        if (*(max_Q)==255) return 1023;
+        if (max_Q == 255) return 1023;
         return 254;
     }
 
-    if (cpt_sat == 1)
+    if (N_sat == 1)
     {
         int MaxCorr = -1;
         // FULL LEFT
-        if (*max_Q==Q[0] && *(max_Q+1)>=ThresholdSat && *(max_Q+1)<254)
+        if (max_Q==Q[0] && Q[i_max+1]>=ThresholdSat && Q[i_max+1]<254)
         {
-            MaxCorr = template_FL[layer-1] * (*(max_Q+1));
-            if (*(max_Q)==255 && MaxCorr<1023) return 1023;
-            if (MaxCorr<254) return 254;
+            MaxCorr = template_FL[layer-1] * Q[i_max+1];
+
+            if (max_Q == 255 && MaxCorr < 1023) return 1023;
+            if (MaxCorr < 254) return 254;
             else return MaxCorr;
         }
 
         // FULL RIGHT
-        if (*max_Q==Q[Q.size()-1] && *(max_Q-1)>=ThresholdSat && *(max_Q-1)<254)
+        if (max_Q==Q[Q.size()-1] && Q[i_max-1]>=ThresholdSat && Q[i_max-1]<254)
         {
-            MaxCorr = template_FR[layer-1] * (*(max_Q-1));
-            if (*(max_Q)==255 && MaxCorr<1023) return 1023;
-            if (MaxCorr<254) return 254;
+            MaxCorr = template_FR[layer-1] * Q[i_max-1];
+
+            if (max_Q == 255 && MaxCorr < 1023) return 1023;
+            if (MaxCorr < 254) return 254;
             else return MaxCorr;
         }
 
-        if (*(max_Q)==255) return 1023;
+        if (max_Q == 255) return 1023;
         return 254;
     }
 
     // NO ONE SINGLE SATURATED STRIP --> no x-talk inversion
     else
     {
-        if (*(max_Q)==255) return 1023;
+        if (max_Q == 255) return 1023;
         return 254;
     }
 }
@@ -156,32 +159,32 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
 int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateFile, bool CENTER)
 {
 	// SETUP 
-	int cpt_sat = 0;
+	int N_sat = 0;
 	int Vmin = 0, Vmax = 0;
 
-    for (unsigned int i=0;i<Q.size();i++)
+    for (unsigned int i=0; i<Q.size(); i++)
     {
-        if (Q[i]>=254) cpt_sat++;
+        if (Q[i]>=254) N_sat++;
     }
 
-	vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
-    int i_max = find(Q.begin(), Q.end(), *(max_Q)) - Q.begin(); 
+	int max_Q = *max_element(Q.begin(), Q.end());
+    int i_max = find(Q.begin(), Q.end(), max_Q) - Q.begin(); 
 
-    if (*(max_Q-1) > *(max_Q+1))
+    if (Q[i_max-1] > Q[i_max+1])
     {
-        Vmax = *(max_Q-1);
-        Vmin = *(max_Q+1);
+        Vmax = Q[i_max-1];
+        Vmin = Q[i_max+1];
     }
     else
     {
-        Vmax = *(max_Q+1);
-        Vmin = *(max_Q-1);
+        Vmax = Q[i_max+1];
+        Vmin = Q[i_max-1];
     }
 
     // NO CORRECTION IF TOO SMALL OR LARGE
     if (Q.size()<2 || Q.size()>8)
     {
-        if (*(max_Q)==255) return 1023;
+        if (max_Q == 255) return 1023;
         return 254;
     }
 
@@ -205,8 +208,9 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
         Template.close();
 
         int MaxCorr = 1.*(Vmax+Vmin)/2 * template_a1[layer-1];
-        if (*(max_Q)==255 && MaxCorr<1023) return 1023;
-        if (MaxCorr<254) return 254;
+
+        if (max_Q == 255 && MaxCorr < 1023) return 1023;
+        if (MaxCorr < 254) return 254;
         else return MaxCorr;
     }
 
@@ -223,8 +227,8 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     Template.close();
 
     int MaxCorr = Vmax * template_a1[layer-1] + Vmin * template_a2[layer-1];
-    if (*(max_Q)==255 && MaxCorr<1023) return 1023;
-    if (MaxCorr<254) return 254;
+    if (max_Q == 255 && MaxCorr < 1023) return 1023;
+    if (MaxCorr < 254) return 254;
     else return MaxCorr;
 }
 
@@ -235,13 +239,13 @@ int Correction_2strips(const std::vector <int>&  Q)
     int index_maxLeft = -1;
 
         // NUMBER OF MAX + IF CONSECUTIVE OR NOT
-    int cpt_sat = 0;
+    int N_sat = 0;
     bool two_cons_sat = false;
 
-    if (Q[0]>=254) cpt_sat++;
+    if (Q[0]>=254) N_sat++;
     for (int i=1; i<Q.size(); i++)
     {
-        if (Q[i]>=254) cpt_sat++;
+        if (Q[i]>=254) N_sat++;
 
         if (Q[i-1]>=254 && Q[i]>=254)
         {
@@ -252,7 +256,7 @@ int Correction_2strips(const std::vector <int>&  Q)
     }
     
         // NO CORRECTION if not 2 consecutive saturated strips, or if clusters too small or if max is at the edge
-    if (cpt_sat!=2 || !two_cons_sat || Q.size() < 4
+    if (N_sat!=2 || !two_cons_sat || Q.size() < 4
         || index_maxLeft==0 || index_maxLeft==Q.size()-2) return SumQ;
     
         // CORRECTION
@@ -265,21 +269,21 @@ int Correction_2strips(const std::vector <int>&  Q)
 void ClusterShape(const std::vector <int>&  Q, bool &left, bool &right, bool &center, bool &FullLeft, bool &FullRight)
 {
     // SETUP
-    vector<int>::const_iterator max_Q = max_element(Q.begin(), Q.end());
-    int i_max = find(Q.begin(), Q.end(), *max_Q) - Q.begin();
+    int max_Q = *max_element(Q.begin(), Q.end());
+    int i_max = find(Q.begin(), Q.end(), max_Q) - Q.begin();
 
     int Nleft = -1, Nright = -1;
     if (Q.size()>=3) {Nleft = Q[i_max-1]; Nright = Q[i_max+1];}
     
-    int cpt_sat = 0;
-    for (int i=0; i<Q.size(); i++) { if (Q[i]>=254) cpt_sat++; }
+    int N_sat = 0;
+    for (int i=0; i<Q.size(); i++) { if (Q[i]>=254) N_sat++; }
 
     // SHAPE
-    if (Q.size()>=3 && cpt_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft>1.1*Nright) left=true;
-    if (Q.size()>=3 && cpt_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft<0.9*Nright) right=true;
-    if (Q.size()>=3 && cpt_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft<=1.1*Nright && Nleft>=0.9*Nright) center=true;
-    if (Q.size()>=2 && cpt_sat==1 && i_max==0) FullLeft=true;
-    if (Q.size()>=2 && cpt_sat==1 && i_max==Q.size()-1) FullRight=true;
+    if (Q.size()>=3 && N_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft>1.1*Nright) left=true;
+    if (Q.size()>=3 && N_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft<0.9*Nright) right=true;
+    if (Q.size()>=3 && N_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft<=1.1*Nright && Nleft>=0.9*Nright) center=true;
+    if (Q.size()>=2 && N_sat==1 && i_max==0) FullLeft=true;
+    if (Q.size()>=2 && N_sat==1 && i_max==Q.size()-1) FullRight=true;
 
     return;
 }
