@@ -115,11 +115,7 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     int i_max = find(Q.begin(), Q.end(), max_Q) - Q.begin();
 
     // NO CORRECTION IF TOO SMALL OR LARGE
-    if (Q.size()<2 || Q.size()>8)
-    {
-        if (max_Q == 255) return 1023;
-        return 254;
-    }
+    if (Q.size()<2 || Q.size()>8) return max_Q;
 
     if (N_sat == 1)
     {
@@ -129,7 +125,7 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
         {
             MaxCorr = template_FL[layer-1] * Q[i_max+1];
 
-            if (max_Q == 255 && MaxCorr < 1023) return 1023;
+            if (max_Q == 255 && MaxCorr < 255) return 255;
             if (MaxCorr < 254) return 254;
             else return MaxCorr;
         }
@@ -139,21 +135,16 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
         {
             MaxCorr = template_FR[layer-1] * Q[i_max-1];
 
-            if (max_Q == 255 && MaxCorr < 1023) return 1023;
+            if (max_Q == 255 && MaxCorr < 255) return 255;
             if (MaxCorr < 254) return 254;
             else return MaxCorr;
         }
 
-        if (max_Q == 255) return 1023;
-        return 254;
+        return max_Q;
     }
 
     // NO ONE SINGLE SATURATED STRIP --> no x-talk inversion
-    else
-    {
-        if (max_Q == 255) return 1023;
-        return 254;
-    }
+    return max_Q;
 }
 
 int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateFile, bool CENTER)
@@ -182,11 +173,7 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     }
 
     // NO CORRECTION IF TOO SMALL OR LARGE
-    if (Q.size()<2 || Q.size()>8)
-    {
-        if (max_Q == 255) return 1023;
-        return 254;
-    }
+    if (Q.size()<2 || Q.size()>8) return max_Q;
 
     // CORRECTION TEMPLATES
     std::ifstream Template(TemplateFile);
@@ -209,7 +196,7 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
 
         int MaxCorr = 1.*(Vmax+Vmin)/2 * template_a1[layer-1];
 
-        if (max_Q == 255 && MaxCorr < 1023) return 1023;
+        if (max_Q == 255 && MaxCorr < 255) return 255;
         if (MaxCorr < 254) return 254;
         else return MaxCorr;
     }
@@ -227,7 +214,7 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     Template.close();
 
     int MaxCorr = Vmax * template_a1[layer-1] + Vmin * template_a2[layer-1];
-    if (max_Q == 255 && MaxCorr < 1023) return 1023;
+    if (max_Q == 255 && MaxCorr < 255) return 255;
     if (MaxCorr < 254) return 254;
     else return MaxCorr;
 }
