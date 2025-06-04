@@ -78,9 +78,10 @@ double getMaxHisto_X(TH1D* h)
 
 
     // CORRECTION FUNCTIONS
+
+// Method for FullLeft and FullRight clusters
 int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string TemplateFile)
 {
-    int MaxCorr = 0;
     int N_sat = 0;
     int ThresholdSat = -1;
 
@@ -93,6 +94,11 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     std::vector<double> template_FR;
 
     std::ifstream Template(TemplateFile);
+    if (!Template.is_open())
+    {
+        std::cerr << "cannot open file " << TemplateFile << std::endl;
+        return {};
+    }
     while (std::getline(Template, line))
     {
         std::istringstream iss(line);
@@ -147,6 +153,7 @@ int Correction_FL_FR(const std::vector <int>&  Q, int layer, std::string Templat
     return max_Q;
 }
 
+// Method for Left, Right and Center clusters
 int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateFile, bool CENTER)
 {
 	// SETUP 
@@ -177,6 +184,11 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
 
     // CORRECTION TEMPLATES
     std::ifstream Template(TemplateFile);
+    if (!Template.is_open())
+    {
+        std::cerr << "cannot open file " << TemplateFile << std::endl;
+        return {};
+    }
     std::string line;
     std::vector<double> template_a1;
     std::vector<double> template_a2;
@@ -219,18 +231,19 @@ int Correction_LRC(const std::vector <int>&  Q, int layer, std::string TemplateF
     else return MaxCorr;
 }
 
+// Method for 2 consecutive saturated strips
 int Correction_2strips(const std::vector <int>&  Q)
 {
     int Qcorr = -1;
     int SumQ = accumulate(Q.begin(), Q.end(), 0);
-    int index_maxLeft = -1;
+    unsigned int index_maxLeft = -1;
 
         // NUMBER OF MAX + IF CONSECUTIVE OR NOT
     int N_sat = 0;
     bool two_cons_sat = false;
 
     if (Q[0]>=254) N_sat++;
-    for (int i=1; i<Q.size(); i++)
+    for (unsigned int i=1; i<Q.size(); i++)
     {
         if (Q[i]>=254) N_sat++;
 
@@ -243,27 +256,35 @@ int Correction_2strips(const std::vector <int>&  Q)
     }
     
         // NO CORRECTION if not 2 consecutive saturated strips, or if clusters too small or if max is at the edge
-    if (N_sat!=2 || !two_cons_sat || Q.size() < 4
+    if (N_sat!=2 || !two_cons_sat || Q.size() <= 3
         || index_maxLeft==0 || index_maxLeft==Q.size()-2) return SumQ;
     
         // CORRECTION
     Qcorr = 1./0.0613 * (Q[index_maxLeft-1] + Q[index_maxLeft+2])/2;
 
-    if (Qcorr > SumQ) return Qcorr;
-    else return SumQ;
+    return Qcorr;
 }
 
-void ClusterShape(const std::vector <int>&  Q, bool &left, bool &right, bool &center, bool &FullLeft, bool &FullRight)
+// Method to determine the shape of the cluster
+void ClusterShape(const std::vector <int>& Q, bool &left, bool &right, bool &center, bool &FullLeft, bool &FullRight)
 {
     // SETUP
-    int max_Q = *max_element(Q.begin(), Q.end());
-    int i_max = find(Q.begin(), Q.end(), max_Q) - Q.begin();
+    if (Q.empty()) return;
+
+    auto it_max = std::max_element(Q.begin(), Q.end());
+    if (it_max == Q.end()) return;
+
+    int max_Q = *it_max;
+    auto it_found = std::find(Q.begin(), Q.end(), max_Q);
+    if (it_found == Q.end()) return;
+
+    unsigned int i_max = it_found - Q.begin();
 
     int Nleft = -1, Nright = -1;
-    if (Q.size()>=3) {Nleft = Q[i_max-1]; Nright = Q[i_max+1];}
+    if (Q.size()>=3 && i_max>0 && i_max<Q.size()-1) {Nleft = Q[i_max-1]; Nright = Q[i_max+1];}
     
     int N_sat = 0;
-    for (int i=0; i<Q.size(); i++) { if (Q[i]>=254) N_sat++; }
+    for (unsigned int i=0; i<Q.size(); i++) { if (Q[i]>=254) N_sat++; }
 
     // SHAPE
     if (Q.size()>=3 && N_sat==1 && i_max>0 && i_max<Q.size()-1 && Nleft>1.1*Nright) left=true;
@@ -275,9 +296,11 @@ void ClusterShape(const std::vector <int>&  Q, bool &left, bool &right, bool &ce
     return;
 }
 
-int ReturnCorr(const std::vector <int>& Q, int subdetid, int detid)
+// Main function to return the corrected charge
+int ReturnCorr(const std::vector <int>& Q, const int layer)
 {
     // SETUP
+    if (Q.empty()) return {};
     bool left=false, right=false, center=false, FullLeft=false, FullRight=false;
     int MaxCorr = -1;
 
@@ -292,15 +315,15 @@ int ReturnCorr(const std::vector <int>& Q, int subdetid, int detid)
     
     MaxCorr = *max_element(Q.begin(), Q.end());
         // 1 saturated strip
-    if (center) MaxCorr = Correction_LRC(Q, FindLayer(subdetid, detid), "Template_correction/Template_CENTER.txt", true);
-    else if (left || right) MaxCorr = Correction_LRC(Q, FindLayer(subdetid, detid), "Template_correction/Template_LEFTRIGHT.txt", false);
-    else if (FullLeft || FullRight) MaxCorr = Correction_FL_FR(Q, FindLayer(subdetid, detid), "Template_correction/Template_FLFR.txt");
+    if (center) MaxCorr = Correction_LRC(Q, layer, "Template_correction/Template_CENTER.txt", true);
+    else if (left || right) MaxCorr = Correction_LRC(Q, layer, "Template_correction/Template_LEFTRIGHT.txt", false);
+    else if (FullLeft || FullRight) MaxCorr = Correction_FL_FR(Q, layer, "Template_correction/Template_FLFR.txt");
     
 
     // SUM CORRECTION
     int sum_Qcorr = 0;
-    int i_max = find(Q.begin(), Q.end(), *max_element(Q.begin(), Q.end())) - Q.begin();
-    for (int i=0; i<Q.size(); i++)
+    unsigned int i_max = find(Q.begin(), Q.end(), *max_element(Q.begin(), Q.end())) - Q.begin();
+    for (unsigned int i=0; i<Q.size(); i++)
     {
         if (i != i_max) sum_Qcorr += Q[i];
     }
@@ -309,3 +332,49 @@ int ReturnCorr(const std::vector <int>& Q, int subdetid, int detid)
     return sum_Qcorr;
 }
 
+// Main function to return the corrected charge vector
+std::vector <int> ReturnCorrVec(const std::vector <int>& Q, const int layer, bool& AreSameCluster)
+{
+    // SETUP
+    if (Q.empty()) return {};
+    bool left=false, right=false, center=false, FullLeft=false, FullRight=false;
+    int MaxCorr = -1;
+
+
+    // SHAPE
+    ClusterShape(Q, left, right, center, FullLeft, FullRight);
+    
+
+    // CORRECTION
+        // 2 consecutive saturated strips
+    MaxCorr = Correction_2strips(Q);
+    if (MaxCorr > accumulate(Q.begin(), Q.end(), 0))
+    {
+        std::vector <int> Qcorr2s;
+        Qcorr2s.push_back(MaxCorr);
+
+        AreSameCluster = false;
+        return Qcorr2s;
+    }
+    
+    MaxCorr = *max_element(Q.begin(), Q.end());
+        // 1 saturated strip
+    if (center) MaxCorr = Correction_LRC(Q, layer, "Template_correction/Template_CENTER.txt", true);
+    else if (left || right) MaxCorr = Correction_LRC(Q, layer, "Template_correction/Template_LEFTRIGHT.txt", false);
+    else if (FullLeft || FullRight) MaxCorr = Correction_FL_FR(Q, layer, "Template_correction/Template_FLFR.txt");
+    
+
+    // SUM CORRECTION
+    std::vector <int> Qcorr;
+    unsigned int i_max = find(Q.begin(), Q.end(), *max_element(Q.begin(), Q.end())) - Q.begin();
+    for (unsigned int i=0; i<Q.size(); i++)
+    {
+        if (i != i_max) Qcorr.push_back(Q[i]);
+        else Qcorr.push_back(MaxCorr);
+    }
+
+    if (accumulate(Qcorr.begin(), Qcorr.end(), 0) <= accumulate(Q.begin(), Q.end(), 0)) AreSameCluster = true;
+    else AreSameCluster = false;
+    
+    return Qcorr;
+}

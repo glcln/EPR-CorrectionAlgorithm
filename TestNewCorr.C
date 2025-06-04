@@ -14,15 +14,16 @@ void TestNewCorr::Loop()
     Long64_t nentries = fChain->GetEntries();
     Long64_t nbytes = 0, nb = 0;
 
-    TFile* SaveData = new TFile("TestOnSigdigi.root", "RECREATE");
+    TFile* ofile = new TFile("TestOnSigdigi.root", "RECREATE");
 
     TH1F* QNewCorr_VS_Qtrue = new TH1F("QNewCorr_VS_Qtrue","QNewCorr_VS_Qtrue",150,0,2);
     QNewCorr_VS_Qtrue->GetXaxis()->SetTitle("Q^{new corr} / Q^{true}");
+    TH1F* QNewCorrVec_VS_Qtrue = new TH1F("QNewCorrVec_VS_Qtrue","QNewCorrVec_VS_Qtrue",150,0,2);
+    QNewCorrVec_VS_Qtrue->GetXaxis()->SetTitle("Q^{new corr vec} / Q^{true}");
 
     cout << endl;
-    cout << "Histograms saved in: " << SaveData->GetName() << endl;
+    cout << "Histograms saved in: " << ofile->GetName() << endl;
     cout << endl;
-    
     //nentries=10000;
     for (Long64_t jentry=0; jentry<nentries;jentry++)
     {
@@ -68,15 +69,21 @@ void TestNewCorr::Loop()
                         }
 
                         if (!Qsat.empty())
-                        {     
+                        {   
+                            int layer = FindLayer(dedx_subdetid[idedx], dedx_detid[idedx]);
                             int sumTrue = accumulate(Qtrue.begin(), Qtrue.end(), 0);
-
-                            int Qcorr = ReturnCorr(Qsat, dedx_subdetid[idedx], dedx_detid[idedx]);
-
+                            int Qcorr = ReturnCorr(Qsat, layer);
+                            bool AreSameCluster = false;
+                            std::vector <int> QcorrVec = ReturnCorrVec(Qsat, layer, AreSameCluster);
+                            
                             // Check if the correction is working (only if saturation) for:
                             //      - One single saturated strips
                             //      - Two consecutive saturated strips
-                            if (cpt_sat > 0) QNewCorr_VS_Qtrue->Fill(1.*Qcorr/sumTrue);
+                            if (cpt_sat > 0)
+                            {
+                                QNewCorr_VS_Qtrue->Fill(1.*Qcorr/sumTrue);
+                                QNewCorrVec_VS_Qtrue->Fill(1.*accumulate(QcorrVec.begin(), QcorrVec.end(), 0)/sumTrue);
+                            }
                         }
 
                     } // end is_strip
@@ -88,7 +95,8 @@ void TestNewCorr::Loop()
 
     } // end entry loop
 
-    SaveData->cd();
+    ofile->cd();
     QNewCorr_VS_Qtrue->Write();
-    SaveData->Close();
+    QNewCorrVec_VS_Qtrue->Write();
+    ofile->Close();
 }

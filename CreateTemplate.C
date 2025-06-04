@@ -14,7 +14,7 @@ void CreateTemplate::Loop()
     gROOT->SetBatch(kTRUE);
 
         // SETUP
-    TFile* SaveData = new TFile("Check_Template.root", "RECREATE");
+    TFile* ofile = new TFile("Check_Template.root", "RECREATE");
 
     ofstream Template_FLFR("Template_correction/Template_FLFR.txt", std::ofstream::out);
     ofstream Template_CENTER("Template_correction/Template_CENTER.txt", std::ofstream::out);
@@ -69,7 +69,7 @@ void CreateTemplate::Loop()
     
 
     cout << endl;
-    cout << "Histograms saved in: " << SaveData->GetName() << endl;
+    cout << "Histograms saved in: " << ofile->GetName() << endl;
     cout << endl;
 
     double DeltaR=0;
@@ -192,12 +192,12 @@ void CreateTemplate::Loop()
     Template_CENTER.close();
 
 
-        // To check templates in the root file
-    SaveData->cd();
+        // OUTPUT CHECK 
+    ofile->cd();
     for (int i=1; i<LeftRight_template_TH2.size(); i++) LeftRight_template_TH2[i]->Write();
     for (int i=1; i<Center_template_TH1.size(); i++) Center_template_TH1[i]->Write();
     for (int i=0; i<FullLeft_template_TH1.size(); i++) {FullRight_template_TH1[i]->Write(); FullLeft_template_TH1[i]->Write();}
-    SaveData->Close();
+    ofile->Close();
 
     return;
 }

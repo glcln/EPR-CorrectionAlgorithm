@@ -1,9 +1,6 @@
 # Environment and Installation
 
-1. Make sure to use the right CMSSW version: `CMSSW_10_6_30`
-
-2. Clone the git project.
-
+Method developped under `CMSSW_10_6_30`
 
 # The correction algorithm
 
@@ -12,12 +9,12 @@ The functions are implemented in `CorrFunctions.h`.
 
 ## Cluster with one single saturated strip
 
-The correction is based on charge reconstruction of the saturated strip using only neighbourhood knowledge. This algorithm only concerns one single saturated strip clusters with a size greater than 2.
+The correction is based on charge reconstruction of the saturated strip using only neighbourhood knowledge. This algorithm only concerns clusters with a size greater than 2 and with a single saturated strip (~90% among the total amount of saturated clusters in muon simulations and data).
 
 
 
 Clusters are first classified in 5 differents families (role of `ClusterShape`): 
-- If adjacent strips of the maximum are similar in size $\longrightarrow$ *Center*, these are the most common clusters (~80% in muon data).
+- If adjacent strips of the maximum are similar in size $\longrightarrow$ *Center*, these are the most common clusters with a single saturated strip (~80% in muon data).
 - If adjacent strips ratio differs by at least 10 % $\longrightarrow$ *Left* or *Right* (depends on the ratio), these are asymetric clusters with a charge barycenter not centered on the maximum.
 - If the maximum is at the edge of the cluster $\longrightarrow$ *FullLeft* or *FullRight*, these are the most asymetric clusters.
 
@@ -27,7 +24,7 @@ Clusters are first classified in 5 differents families (role of `ClusterShape`):
 
 
 
-After classification, according to the shape a correction is performed using coefficient templates (see below). This is the role of `ReturnCorr` wich calls `Correction_LRC` and `Correction_FL_FR`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
+After classification, according to the shape a correction is performed using coefficient templates (see below). This is the role of `ReturnCorr` or `ReturnCorrVec` wich calls `Correction_LRC` and `Correction_FL_FR`. If the corrected maximum is below 254 ADC or if the conditions are not fulfilled, this return the actual value of the maximum (meaning no correction).
 
 
 ## Cluster with two consecutive saturated strips
